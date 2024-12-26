@@ -1,6 +1,7 @@
-const std = @import("std");
-const vm = @import("vm.zig");
-const io = @import("io.zig");
+const std: type = @import("std");
+const vm: type = @import("vm/vm.zig");
+const io: type = @import("io.zig");
+const VM: type = vm.VM;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -22,10 +23,11 @@ pub fn main() !void {
     };
     defer file.close();
 
-    const bytes = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
-    defer allocator.free(bytes);
+    var buffer: [65536]u8 = undefined;
+    const bytes_read = try file.read(&buffer);
+    const bytes = buffer[0..bytes_read];
 
-    var machine = vm.VM.init(allocator);
+    var machine: VM = VM.init(allocator);
     defer machine.deinit();
 
     try machine.execute(bytes);

@@ -1,34 +1,14 @@
-const std = @import("std");
-const Allocator = std.mem.Allocator;
+const std: type = @import("std");
+const Value: type = @import("value.zig").Value;
+const OpCode: type = @import("opcodes.zig").OpCode;
 
-const OpCode = enum(u8) {
-    PRINT = 1,
-    LOAD_CONST = 2,
-    LOAD_INT = 3,
-    LOOP_START = 4,
-    LOOP_END = 5,
-    LOAD_VAR = 6,
-    STDIN = 7,
-    STORE = 8,
-};
-
-const Value = union(enum) {
-    integer: u128,
-    string: []const u8,
-
-    pub fn print(self: Value) !void {
-        switch (self) {
-            .integer => |i| try std.io.getStdOut().writer().print("{d}\n", .{i}),
-            .string => |s| try std.io.getStdOut().writer().print("{s}\n", .{s}),
-        }
-    }
-};
+const Allocator: type = std.mem.Allocator;
 
 pub const VM = struct {
     allocator: Allocator,
     stack: std.ArrayList(Value),
-    current_loop_index: u128,
-    loop_end: u128,
+    current_loop_index: u64,
+    loop_end: u64,
     variables: std.StringHashMap(Value),
 
     const Self = @This();
@@ -68,14 +48,14 @@ pub const VM = struct {
                     try self.stack.append(.{ .string = str });
                 },
                 .LOAD_INT => {
-                    const val = @as(u128, code[ip]) << 56 |
-                        @as(u128, code[ip + 1]) << 48 |
-                        @as(u128, code[ip + 2]) << 40 |
-                        @as(u128, code[ip + 3]) << 32 |
-                        @as(u128, code[ip + 4]) << 24 |
-                        @as(u128, code[ip + 5]) << 16 |
-                        @as(u128, code[ip + 6]) << 8 |
-                        @as(u128, code[ip + 7]);
+                    const val = @as(u64, code[ip]) << 56 |
+                        @as(u64, code[ip + 1]) << 48 |
+                        @as(u64, code[ip + 2]) << 40 |
+                        @as(u64, code[ip + 3]) << 32 |
+                        @as(u64, code[ip + 4]) << 24 |
+                        @as(u64, code[ip + 5]) << 16 |
+                        @as(u64, code[ip + 6]) << 8 |
+                        @as(u64, code[ip + 7]);
                     ip += 8;
                     try self.stack.append(.{ .integer = @intCast(val) });
                 },
@@ -83,27 +63,27 @@ pub const VM = struct {
                     try self.stack.append(.{ .integer = @intCast(self.current_loop_index) });
                 },
                 .LOOP_START => {
-                    const start = @as(u128, code[ip]) << 56 |
-                        @as(u128, code[ip + 1]) << 48 |
-                        @as(u128, code[ip + 2]) << 40 |
-                        @as(u128, code[ip + 3]) << 32 |
-                        @as(u128, code[ip + 4]) << 24 |
-                        @as(u128, code[ip + 5]) << 16 |
-                        @as(u128, code[ip + 6]) << 8 |
-                        @as(u128, code[ip + 7]);
+                    const start = @as(u64, code[ip]) << 56 |
+                        @as(u64, code[ip + 1]) << 48 |
+                        @as(u64, code[ip + 2]) << 40 |
+                        @as(u64, code[ip + 3]) << 32 |
+                        @as(u64, code[ip + 4]) << 24 |
+                        @as(u64, code[ip + 5]) << 16 |
+                        @as(u64, code[ip + 6]) << 8 |
+                        @as(u64, code[ip + 7]);
                     ip += 8;
-                    const end = @as(u128, code[ip]) << 56 |
-                        @as(u128, code[ip + 1]) << 48 |
-                        @as(u128, code[ip + 2]) << 40 |
-                        @as(u128, code[ip + 3]) << 32 |
-                        @as(u128, code[ip + 4]) << 24 |
-                        @as(u128, code[ip + 5]) << 16 |
-                        @as(u128, code[ip + 6]) << 8 |
-                        @as(u128, code[ip + 7]);
+                    const end = @as(u64, code[ip]) << 56 |
+                        @as(u64, code[ip + 1]) << 48 |
+                        @as(u64, code[ip + 2]) << 40 |
+                        @as(u64, code[ip + 3]) << 32 |
+                        @as(u64, code[ip + 4]) << 24 |
+                        @as(u64, code[ip + 5]) << 16 |
+                        @as(u64, code[ip + 6]) << 8 |
+                        @as(u64, code[ip + 7]);
                     ip += 8;
                     const loop_body_start = ip;
 
-                    var nested: u32 = 0;
+                    var nested: u64 = 0;
                     var loop_end_ip = ip;
                     while (loop_end_ip < code.len) : (loop_end_ip += 1) {
                         if (code[loop_end_ip] == @intFromEnum(OpCode.LOOP_START)) nested += 1;

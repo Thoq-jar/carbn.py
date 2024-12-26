@@ -1,10 +1,24 @@
 #!/bin/bash
 
-echo "Building..."
-bin/compile "$@"
+release_mode="safe"
+
+new_args=()
+for arg in "$@"; do
+    if [ "$arg" = "--small" ]; then
+        release_mode="small"
+    elif [ "$arg" = "--fast" ]; then
+        release_mode="fast"
+    elif [ "$arg" = "--safe" ]; then
+        release_mode="safe"
+    else
+        new_args+=("$arg")
+    fi
+done
+
+bin/compile "${new_args[@]}"
 
 modified_args=()
-for arg in "$@"; do
+for arg in "${new_args[@]}"; do
     if [[ $arg =~ \.[^.]+$ ]]; then
         modified_args+=("${arg%.*}.crbn")
     else
@@ -12,4 +26,4 @@ for arg in "$@"; do
     fi
 done
 
-zig build --release=fast run -- "${modified_args[@]}"
+zig build --release=$release_mode run -- "${modified_args[@]}"
