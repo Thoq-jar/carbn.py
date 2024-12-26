@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+import struct
+import os
+import argparse
+
+OPCODES = {
+    'PRINT': 1,
+    'LOAD_CONST': 2,
+    'LOAD_INT': 3,
+    'LOOP_START': 4,
+    'LOOP_END': 5,
+    'LOAD_VAR': 6,
+}
+
+def compile_file(source):
+    bytecode = []
+    loop_var = None
+    
+    for line in source.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+            
+        if line.startswith('print('):
+            value = line[6:-1]
+            if value.startswith('"') and value.endswith('"'):
+                bytecode.extend([OPCODES['LOAD_CONST'], len(value[1:-1])])
+
+                bytecode.extend(value[1:-1].encode())
+                bytecode.append(OPCODES['PRINT'])
+            elif value == loop_var:
+                bytecode.append(OPCODES['LOAD_VAR'])
+                bytecode.append(OPCODES['PRINT'])
+            else:
+                num = int(value)
+                bytecode.extend([OPCODES['LOAD_INT']])
+                bytecode.extend(struct.pack(">Q", num & ((1 << 64) - 1)))
+                bytecode.append(OPCODES['PRINT'])
+        elif line.startswith('for'):
+            parts = line.split()
+            loop_var = parts[1]
+            range_parts = parts[3].split('..')
+            start = int(range_parts[0])
+            end = int(range_parts[1])
+            bytecode.extend([OPCODES['LOOP_START']])
+            bytecode.extend(struct.pack(">Q", start))
+            bytecode.extend(struct.pack(">Q", end))
+        elif line.startswith('}'):
+            bytecode.append(OPCODES['LOOP_END'])
+            
+    return bytes(bytecode)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Pop language compiler')
+    parser.add_argument('input', help='Input source file')
+    parser.add_argument('-o', '--output', help='Output file')
+    
+    args = parser.parse_args()
+    
+    if args.output:
+        output_file = args.output
+    else:
+        base = os.path.splitext(args.input)[0]
+        output_file = f"{base}.crbn"
+    
+    print(f"Compiling {args.input} to {output_file}")
+    
+    with open(args.input, 'r') as f:
+        bytecode = compile_file(f.read())
+    with open(output_file, 'wb') as f:
+        f.write(bytecode)
+    
+    print(f"Successfully compiled to {output_file}")

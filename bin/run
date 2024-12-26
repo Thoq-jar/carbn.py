@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "Building..."
+bin/compile "$@"
+
+modified_args=()
+for arg in "$@"; do
+    if [[ $arg =~ \.[^.]+$ ]]; then
+        modified_args+=("${arg%.*}.crbn")
+    else
+        modified_args+=("$arg")
+    fi
+done
+
+zig build --release=fast run -- "${modified_args[@]}"
