@@ -1,5 +1,6 @@
 const std = @import("std");
 const vm = @import("vm.zig");
+const io = @import("io.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -12,14 +13,11 @@ pub fn main() !void {
     _ = args.next();
 
     const bytecode_path = args.next() orelse {
-        std.debug.print("Usage: zig build run -- <bytecode_file.crbn>\n", .{});
+        try io.print("Usage: zig build run -- <bytecode_file.crbn>\n", .{});
         return error.InvalidArguments;
     };
 
-    std.debug.print("Loading bytecode from: {s}\n", .{bytecode_path});
-
     var file = std.fs.cwd().openFile(bytecode_path, .{}) catch |err| {
-        std.debug.print("Error opening file: {}\n", .{err});
         return err;
     };
     defer file.close();
