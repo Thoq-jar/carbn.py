@@ -1,8 +1,10 @@
 const std: type = @import("std");
 const Value: type = @import("value.zig").Value;
 const OpCode: type = @import("opcodes.zig").OpCode;
+const io: type = @import("io.zig");
 
 const Allocator: type = std.mem.Allocator;
+const printvm = io.printvm;
 
 pub const VM = struct {
     allocator: Allocator,
@@ -37,7 +39,18 @@ pub const VM = struct {
             switch (op) {
                 .PRINT => {
                     const value = self.stack.items[self.stack.items.len - 1];
-                    try value.print();
+                    switch (value) {
+                        .integer => |i| {
+                            var buf: [20]u8 = undefined;
+                            const slice = std.fmt.bufPrint(&buf, "{d}\n", .{i}) catch return;
+                            printvm(slice);
+                        },
+                        .string => |s| {
+                            var buf = [_]u8{'\n'};
+                            printvm(s);
+                            printvm(&buf);
+                        },
+                    }
                     _ = self.stack.pop();
                 },
                 .LOAD_CONST => {
