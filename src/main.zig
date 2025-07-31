@@ -1,6 +1,6 @@
 const std: type = @import("std");
 const vm: type = @import("vm/vm.zig");
-const io: type = @import("io.zig");
+const util: type = @import("util.zig");
 const VM: type = vm.VM;
 
 pub fn main() !void {
@@ -14,7 +14,7 @@ pub fn main() !void {
     _ = args.next();
 
     const bytecode_path = args.next() orelse {
-        try io.print("Usage: zig build run -- <bytecode_file.crbn>\n", .{});
+        try util.print("Usage: zig build run -- <bytecode_file.crbn>\n", .{});
         return error.InvalidArguments;
     };
 

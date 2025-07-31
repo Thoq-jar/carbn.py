@@ -1,3 +1,6 @@
 /.zig-cache
 /zig-out
+/toolchain/.venv
+/build
+/dist
 **/*.crbn
