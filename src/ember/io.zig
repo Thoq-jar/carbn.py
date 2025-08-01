@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-pub fn printvm(message: []const u8) void {
+pub fn printRuntime(message: []const u8) void {
     switch (comptime builtin.os.tag) {
         .linux => switch (comptime builtin.cpu.arch) {
             .x86_64 => {

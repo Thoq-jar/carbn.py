@@ -1,7 +1,7 @@
 const std: type = @import("std");
-const vm: type = @import("vm/vm.zig");
+const ember: type = @import("ember/runtime.zig");
 const util: type = @import("util.zig");
-const VM: type = vm.VM;
+const Ember: type = ember.Runtime;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -27,7 +27,7 @@ pub fn main() !void {
     const bytes_read = try file.read(&buffer);
     const bytes = buffer[0..bytes_read];
 
-    var machine: VM = VM.init(allocator);
+    var machine: Ember = Ember.init(allocator);
     defer machine.deinit();
 
     try machine.execute(bytes);

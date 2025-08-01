@@ -79,3 +79,11 @@ class FunctionDef(ASTNode):
     name: str
     args: List[str]
     body: List['ASTNode']
+
+@dataclass
+class Return(ASTNode):
+    value: Optional['ASTNode']
+
+@dataclass
+class FString(ASTNode):
+    parts: List['ASTNode']

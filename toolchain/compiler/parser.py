@@ -54,6 +54,15 @@ class PythonParser:
         elif isinstance(node, ast.Constant):
             return Constant(value=node.value)
 
+        elif isinstance(node, ast.JoinedStr):
+            parts = []
+            for value in node.values:
+                if isinstance(value, ast.Constant):
+                    parts.append(Constant(value=value.value))
+                elif isinstance(value, ast.FormattedValue):
+                    parts.append(self.convert_ast(value.value))
+            return FString(parts=parts)
+
         elif isinstance(node, ast.BinOp):
             op_map = {
                 ast.Add: 'ADD',
@@ -130,5 +139,9 @@ class PythonParser:
                 args=args,
                 body=[self.convert_ast(stmt) for stmt in node.body]
             )
+
+        elif isinstance(node, ast.Return):
+            value = self.convert_ast(node.value) if node.value else None
+            return Return(value=value)
 
         return Constant(value=None)

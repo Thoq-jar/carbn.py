@@ -56,6 +56,7 @@ class CodeGenerator:
         self.bytecode = []
         self.variables = {}
         self.functions = {}
+        self.function_addresses = {}
 
     def generate(self, ast_node: ASTNode) -> bytes:
         self.logger.phase("Carbn Codegen")
@@ -96,8 +97,19 @@ class CodeGenerator:
 
     def visit_node(self, node: ASTNode):
         if isinstance(node, Module):
+            main_start_pos = len(self.bytecode)
+            self.emit('JMP', 0)
+
             for stmt in node.body:
-                self.visit_node(stmt)
+                if isinstance(stmt, FunctionDef):
+                    self.generate_function(stmt)
+
+            main_start = len(self.bytecode)
+            self.bytecode[main_start_pos + 1:main_start_pos + 9] = struct.pack(">Q", main_start)
+
+            for stmt in node.body:
+                if not isinstance(stmt, FunctionDef):
+                    self.visit_node(stmt)
 
         elif isinstance(node, Assignment):
             self.visit_node(node.value)
@@ -113,7 +125,7 @@ class CodeGenerator:
                 if node.args:
                     for arg in node.args:
                         self.visit_node(arg)
-                        self.emit('PRINT')
+                    self.emit('PRINT')
                 else:
                     self.emit('LOAD_CONST', '')
                     self.emit('PRINT')
@@ -131,6 +143,19 @@ class CodeGenerator:
                 if node.args:
                     self.visit_node(node.args[0])
                     self.emit('CAST_FLOAT')
+            elif node.func == 'range':
+                if len(node.args) >= 2:
+                    start_val = node.args[0]
+                    end_val = node.args[1]
+                    if isinstance(start_val, Constant) and isinstance(end_val, Constant):
+                        values = list(range(start_val.value, end_val.value))
+                        for val in values:
+                            self.emit('LOAD_INT', val)
+                        self.emit('BUILD_LIST', len(values))
+            elif node.func in self.function_addresses:
+                for arg in node.args:
+                    self.visit_node(arg)
+                self.emit('CALL', self.function_addresses[node.func])
 
         elif isinstance(node, Name):
             self.emit('LOAD_VAR', node.id)
@@ -146,6 +171,27 @@ class CodeGenerator:
                 self.emit('LOAD_BOOL', 1 if node.value else 0)
             elif node.value is None:
                 self.emit('LOAD_NULL')
+
+        elif isinstance(node, FString):
+            result_parts = []
+            for part in node.parts:
+                if isinstance(part, Constant):
+                    result_parts.append(part.value)
+                else:
+                    self.visit_node(part)
+                    result_parts.append(None)
+
+            if len(result_parts) == 1 and result_parts[0] is not None:
+                self.emit('LOAD_CONST', result_parts[0])
+            else:
+                for i, part in enumerate(node.parts):
+                    if isinstance(part, Constant):
+                        self.emit('LOAD_CONST', part.value)
+                    else:
+                        self.visit_node(part)
+
+                    if i > 0:
+                        self.emit('ADD')
 
         elif isinstance(node, BinaryOp):
             self.visit_node(node.left)
@@ -254,10 +300,30 @@ class CodeGenerator:
             loop_end = len(self.bytecode)
             self.bytecode[jmp_pos + 1:jmp_pos + 9] = struct.pack(">Q", loop_end)
 
-        elif isinstance(node, List):
+        elif isinstance(node, ListNode):
             for item in node.elts:
                 self.visit_node(item)
             self.emit('BUILD_LIST', len(node.elts))
+
+        elif isinstance(node, Return):
+            if node.value:
+                self.visit_node(node.value)
+            else:
+                self.emit('LOAD_NULL')
+            self.emit('RET')
+
+    def generate_function(self, func_def: FunctionDef):
+        func_start = len(self.bytecode)
+        self.function_addresses[func_def.name] = func_start
+
+        for param in reversed(func_def.args):
+            self.emit('STORE', param)
+
+        for stmt in func_def.body:
+            self.visit_node(stmt)
+
+        self.emit('LOAD_NULL')
+        self.emit('RET')
 
     def optimize_bytecode(self):
         pass

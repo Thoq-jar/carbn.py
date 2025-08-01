@@ -1,4 +1,3 @@
-import time
 import sys
 
 class Logger:
@@ -17,7 +16,6 @@ class Logger:
 
         print(message)
         sys.stdout.flush()
-        time.sleep(0.2)
 
     def print_result(self, success, message, depth=0, error_output=""):
         for i in range(depth - 1):
@@ -48,8 +46,6 @@ class Logger:
 
     def emit_phase(self, phase_name):
         self.print_progress(f"Emit {phase_name}")
-        time.sleep(0.5)
 
     def phase(self, phase_name):
         self.print_progress(phase_name)
-        time.sleep(0.5)
