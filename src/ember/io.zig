@@ -5,12 +5,12 @@ pub fn printRuntime(message: []const u8) void {
     switch (comptime builtin.os.tag) {
         .linux => switch (comptime builtin.cpu.arch) {
             .x86_64 => {
-                asm volatile ("syscall"
-                    :
-                    : [number] "{rax}" (1),
-                      [arg1] "{rdi}" (1),
-                      [arg2] "{rsi}" (message.ptr),
-                      [arg3] "{rdx}" (message.len),
+                _ = asm volatile ("syscall"
+                    : [ret] "={rax}" (-> isize),
+                    : [number] "{rax}" (@as(usize, 1)),
+                      [arg1] "{rdi}" (@as(usize, 1)),
+                      [arg2] "{rsi}" (@intFromPtr(message.ptr)),
+                      [arg3] "{rdx}" (@as(usize, message.len)),
                     : "rcx", "r11", "memory"
                 );
             },

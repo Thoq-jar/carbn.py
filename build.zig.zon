@@ -1,13 +1,8 @@
 .{
-    .name = .VM,
+    .name = .Ember,
     .version = "0.0.0",
     .fingerprint = 0xa555d50059174bda,
     .dependencies = .{},
 
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "src",
-        "LICENSE",
-    },
+    .paths = .{ "build.zig", "build.zig.zon", "src", "toolchain", "LICENSE", "README.md" },
 }

@@ -33,7 +33,7 @@ def build_executable():
         print("    ├── [+] PyInstaller completed successfully")
 
         dist_path = Path("../dist")
-        executable_name = "crbnc.exe" if os.name == 'nt' else "crbnc"
+        executable_name = "carbn.exe" if os.name == 'nt' else "carbn"
         executable_path = dist_path / executable_name
 
         if executable_path.exists():
@@ -61,7 +61,7 @@ def main():
 
     if build_executable():
         print("[+] Build completed successfully!")
-        print("[+] Run the compiler with: ./dist/crbnc <input.py>")
+        print("[+] Run the compiler with: ./dist/carbn <input.py>")
     else:
         print("[-] Build failed!")
         sys.exit(1)
